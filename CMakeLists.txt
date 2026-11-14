@@ -1,0 +1,101 @@
+cmake_minimum_required(VERSION 3.20)
+
+# CMake initializes Apple deployment defaults during the first project() call.
+# Explicit settings and toolchains retain ownership of their target platform.
+if (CMAKE_HOST_APPLE AND (NOT CMAKE_SYSTEM_NAME OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+        AND NOT CMAKE_TOOLCHAIN_FILE AND "$ENV{CMAKE_TOOLCHAIN_FILE}" STREQUAL ""
+        AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET AND "$ENV{MACOSX_DEPLOYMENT_TARGET}" STREQUAL "")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum macOS deployment target")
+endif ()
+
+project(archive VERSION 0.1.0 LANGUAGES NONE)
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/HuxerUIProject.cmake")
+if (HUXERUI_PROJECT_PLAN_ONLY)
+    return()
+endif ()
+
+file(GLOB_RECURSE LIBRARY_SOURCE_FILES CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cxx"
+)
+if (ANDROID)
+    file(GLOB_RECURSE LIBRARY_ANDROID_SOURCE_FILES CONFIGURE_DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/android/src/main/cpp/*.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/android/src/main/cpp/*.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/android/src/main/cpp/*.cxx"
+    )
+    list(APPEND LIBRARY_SOURCE_FILES ${LIBRARY_ANDROID_SOURCE_FILES})
+endif ()
+if (WIN32)
+    file(GLOB_RECURSE LIBRARY_WINDOWS_SOURCE_FILES CONFIGURE_DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/windows/src/*.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/windows/src/*.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/windows/src/*.cxx"
+    )
+    list(APPEND LIBRARY_SOURCE_FILES ${LIBRARY_WINDOWS_SOURCE_FILES})
+endif ()
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    file(GLOB_RECURSE LIBRARY_LINUX_SOURCE_FILES CONFIGURE_DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/linux/src/*.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/linux/src/*.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/linux/src/*.cxx"
+    )
+    list(APPEND LIBRARY_SOURCE_FILES ${LIBRARY_LINUX_SOURCE_FILES})
+endif ()
+if (APPLE AND NOT IOS)
+    file(GLOB_RECURSE LIBRARY_MACOS_SOURCE_FILES CONFIGURE_DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/macos/src/*.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/macos/src/*.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/macos/src/*.cxx"
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/macos/src/*.mm"
+    )
+    list(APPEND LIBRARY_SOURCE_FILES ${LIBRARY_MACOS_SOURCE_FILES})
+endif ()
+if (EMSCRIPTEN)
+    file(GLOB_RECURSE LIBRARY_WEB_SOURCE_FILES CONFIGURE_DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/web/src/*.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/web/src/*.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/platform/web/src/*.cxx"
+    )
+    list(APPEND LIBRARY_SOURCE_FILES ${LIBRARY_WEB_SOURCE_FILES})
+endif ()
+
+huxerui_add_library(huxerui_archive
+        SOURCES
+            ${LIBRARY_SOURCE_FILES}
+        RESOURCES
+            resources
+        RESOURCE_NAMESPACE
+            huxerui_archive
+)
+
+add_library(HuxerUI::Archive ALIAS huxerui_archive)
+
+if (HUXERUI_LIBRARY_GRAPH_ONLY)
+    return()
+endif ()
+
+target_include_directories(huxerui_archive PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<INSTALL_INTERFACE:include>"
+)
+target_compile_features(huxerui_archive PUBLIC cxx_std_20)
+
+enable_language(C)
+include(cmake/ArchiveDependencies.cmake)
+
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR AND NOT CMAKE_CROSSCOMPILING)
+    include(CTest)
+    if (BUILD_TESTING)
+        add_executable(huxerui_archive_tests tests/archive_test.cpp)
+        target_compile_features(huxerui_archive_tests PRIVATE cxx_std_20)
+        target_compile_definitions(huxerui_archive_tests PRIVATE LIBARCHIVE_STATIC)
+        target_link_libraries(huxerui_archive_tests PRIVATE HuxerUI::Archive HuxerUI::huxerui_static archive_static)
+        add_test(NAME huxerui_archive COMMAND ${CMAKE_COMMAND}
+                -DTEST_EXECUTABLE=$<TARGET_FILE:huxerui_archive_tests>
+                -DTEST_ROOT=${CMAKE_CURRENT_BINARY_DIR}/test-output
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/run.cmake)
+    endif ()
+endif ()

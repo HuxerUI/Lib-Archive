@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Archive Preview
+Exec=example_archive
+Icon=example_archive
+Categories=Utility;
+Terminal=false
