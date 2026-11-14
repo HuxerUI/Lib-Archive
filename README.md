@@ -31,13 +31,13 @@ huxerui_use_library(my_app
 
 ### Pin a tag
 
-Set `LIB_ARCHIVE_TAG` to the name of a tag published in the Lib-Archive repository.
+Use `v0.1.0` to pin the first Lib-Archive release.
 
 ```cmake
 huxerui_use_library(my_app
     TARGET HuxerUI::Archive
     URL "https://github.com/HuxerUI/Lib-Archive.git"
-    TAG "${LIB_ARCHIVE_TAG}"
+    TAG "v0.1.0"
 )
 ```
 
