@@ -1,0 +1,39 @@
+[package]
+namespace   = "huxerui"
+name        = "archive"
+version     = "0.1.1"
+standard    = "c++23"
+description = "HuxerUI archive and stream compression library (ZIP, TAR, TAR.GZ, TAR.ZST, gzip, Zstandard)"
+repo        = "https://github.com/HuxerUI/Lib-Archive"
+
+[package.metadata.huxerui]
+library   = "HuxerUI::Archive"
+resources = "resources"
+name      = "archive"
+id        = "org.huxerui.archive"
+namespace = "huxerui::archive"
+# Hand-maintained modules/archive.cppm: HuxerUI's strip_noncode() misparses the C++14 digit
+# separator in `100'000` (include/huxerui/archive.h:64) as a char literal and omits ArchiveReader.
+# Drop this once HuxerUI fixes strip_noncode().
+cpp_modules_gen = false
+
+[dependencies]
+huxerui.huxerui = "0.5.5"
+
+[dependencies.compat]
+libarchive = "3.8.7"
+zlib       = "1.3.2"
+zstd       = "1.5.7"
+
+[targets.huxerui_archive]
+kind = "lib"
+
+[lib]
+path = "modules/archive.cppm"
+
+[build]
+sources      = []
+include_dirs = ["include"]
+
+[target.windows.build]
+defines = ["NOMINMAX"]
