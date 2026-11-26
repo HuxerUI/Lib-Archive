@@ -1,7 +1,7 @@
 [package]
 namespace   = "huxerui"
 name        = "archive"
-version     = "0.1.0"
+version     = "0.1.1"
 standard    = "c++23"
 description = "HuxerUI archive and stream compression library (ZIP, TAR, TAR.GZ, TAR.ZST, gzip, Zstandard)"
 repo        = "https://github.com/HuxerUI/Lib-Archive"
